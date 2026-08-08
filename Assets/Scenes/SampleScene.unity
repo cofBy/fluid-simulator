@@ -404,6 +404,7 @@ MonoBehaviour:
   radius: 0.5
   segments: 8
   waterMat: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
+  gravity: 20
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

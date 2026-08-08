@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class fluid : MonoBehaviour
 {
@@ -7,9 +8,16 @@ public class fluid : MonoBehaviour
     public int segments;
     public Material waterMat;
 
+    [Header("movemnt")]
+    public float gravity;
+    Vector2 velocity;
+    Vector2 position;
+
     private void Update()
     {
-        circle(Vector2.zero);
+        velocity += new Vector2(0, -gravity) * Time.deltaTime;
+        position += velocity * Time.deltaTime;
+        circle(position);
     }
     void circle(Vector2 position)
     {
