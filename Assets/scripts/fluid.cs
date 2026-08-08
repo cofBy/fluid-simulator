@@ -18,6 +18,8 @@ public class fluid : MonoBehaviour
     Vector2 velocity;
     Vector2 position;
 
+    public float elasticity;
+
     [Header("container")]
     public Vector2 boxSize;
 
@@ -25,6 +27,8 @@ public class fluid : MonoBehaviour
     {
         velocity += new Vector2(0, -gravity) * Time.deltaTime;
         position += velocity * Time.deltaTime;
+        collision();
+
         circle(position);
         drawContainer();
     }
@@ -89,10 +93,19 @@ public class fluid : MonoBehaviour
         Graphics.DrawMesh(mesh, Vector2.zero, Quaternion.identity, containerMat, 0, Camera.main);
     }
 
-    bool collision(Vector2 pos)
+    void collision()
     {
         Vector2 half = boxSize / 2;
 
-        return Mathf.Abs(pos.x) <= half.x || Mathf.Abs(pos.y) <= half.y;
+        if (Mathf.Abs(position.x) >= half.x - radius)
+        {
+            position.x = (half.x - radius) * Mathf.Sign(position.x);
+            velocity.y *= -1 * elasticity;
+        }
+        if (Mathf.Abs(position.y) >= half.y - radius)
+        {
+            position.y = (half.y - radius) * Mathf.Sign(position.y);
+            velocity.y *= -1 * elasticity;
+        }
     }
 }

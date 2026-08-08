@@ -404,10 +404,11 @@ MonoBehaviour:
   baseUnlit: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
   radius: 0.5
   segments: 8
-  waterColor: {r: 0.0047169924, g: 0.6418675, b: 1, a: 1}
+  fluidColor: {r: 0, g: 0.69703305, b: 1, a: 1}
   containerThickness: 0.5
   containerColor: {r: 0.2804824, g: 0.2804824, b: 0.31132078, a: 1}
   gravity: 20
+  elasticity: 1
   boxSize: {x: 35, y: 15}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
