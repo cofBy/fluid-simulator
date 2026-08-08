@@ -401,10 +401,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e6011876330e3fe47840b9ee9cc107b7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: '::'
+  baseUnlit: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
   radius: 0.5
   segments: 8
-  waterMat: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
+  waterColor: {r: 0.0047169924, g: 0.6418675, b: 1, a: 1}
+  containerThickness: 0.5
+  containerColor: {r: 0.2804824, g: 0.2804824, b: 0.31132078, a: 1}
   gravity: 20
+  boxSize: {x: 35, y: 15}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
