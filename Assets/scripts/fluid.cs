@@ -1,66 +1,113 @@
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class fluid : MonoBehaviour
 {
     [Header("drawing")]
     public Material baseUnlit;
 
-    public float radius;
+    public float particleRadius;
     public int segments;
     public Color fluidColor;
+    Mesh fluidMesh;
+    Material fluidMat;
 
     public float containerThickness;
     public Color containerColor;
+    Mesh containerMesh;
+    Material containerMat;
 
     [Header("fluid")]
-    public float gravity;
-    Vector2 velocity;
-    Vector2 position;
+    public int particlesAmount;
+    public float spacing;
+    Vector2[] positions;
+    Vector2[] velocitys;
+    float[] densities;
 
+    public float dampingRadius;
+    public float mass;
+    public float targetDensity;
+    public float pressureMultiplier;
+
+    public float gravity;
     public float elasticity;
 
     [Header("container")]
     public Vector2 boxSize;
 
+    private void Awake()
+    {
+        positions = new Vector2[particlesAmount];
+        velocitys = new Vector2[particlesAmount];
+        densities = new float[particlesAmount];
+        
+        int rows = (int)Mathf.Sqrt(particlesAmount);
+        int cols = (particlesAmount + rows - 1) / rows;
+        float space = particlesAmount * 2 + spacing;
+        for (int i = 0; i < particlesAmount; i++)
+        {
+            float x = (i % rows - rows / 2f + 0.5f) * spacing;
+            float y = (i / rows - cols / 2f + 0.5f) * spacing;
+            positions[i] = new Vector2(x, y);
+        }
+
+        constructCircle();
+        constructContainer();
+    }
     private void Update()
     {
-        velocity += new Vector2(0, -gravity) * Time.deltaTime;
-        position += velocity * Time.deltaTime;
-        collision();
-
-        circle(position);
-        drawContainer();
+        for (int i = 0; i < particlesAmount; i++)
+        {
+            velocitys[i] += new Vector2(0, -gravity) * Time.deltaTime;
+            densities[i] = calculateDensity(positions[i]);
+        }
+        for (int i = 0; i < particlesAmount; i++)   
+        {
+            Vector2 pressureAcc = pressureGradiant(i) / densities[i];
+            velocitys[i] += pressureAcc * Time.deltaTime;
+        }
+        for (int i = 0; i < particlesAmount; i++)
+        {
+            positions[i] += velocitys[i] * Time.deltaTime;
+            Debug.DrawRay(positions[i], velocitys[i]);
+            collision(i);
+            Graphics.DrawMesh(fluidMesh, positions[i], Quaternion.identity, fluidMat, 0, Camera.main);
+        }
+        Graphics.DrawMesh(containerMesh, Vector2.zero, Quaternion.identity, containerMat, 0, Camera.main);
     }
-    void circle(Vector2 pos)
+
+    float calculateDensity(Vector2 pos)
     {
-        Mesh mesh = new Mesh();
+        float density = 0;
+        foreach (Vector2 otherPos in positions)
+        {
+            float distance = Vector2.Distance(otherPos, pos);
+            density += mass * smoothing(distance, dampingRadius);
+        }
+        return density;
+    }
+    void constructCircle()
+    {
+        fluidMesh = new Mesh();
         Vector3[] verts = new Vector3[segments + 1];
         int[] tris = new int[segments * 3];
-
         verts[0] = Vector2.zero;
         for (int i = 0; i < segments; i++)
         {
             float angle = (float)i / segments * Mathf.PI * 2;
-            verts[i + 1] = new Vector3(Mathf.Sin(angle), Mathf.Cos(angle)) * radius;
-
+            verts[i + 1] = new Vector3(Mathf.Sin(angle), Mathf.Cos(angle)) * particleRadius;
             int t = i * 3;
             tris[t + 0] = 0;
             tris[t + 1] = (i + 1);
             tris[t + 2] = (i + 1) % segments + 1;
         }
-
-        mesh.vertices = verts;
-        mesh.triangles = tris;
-
-        Material waterMat = new Material(baseUnlit);
-        waterMat.color = fluidColor;
-        Graphics.DrawMesh(mesh, pos, Quaternion.identity, waterMat, 0, Camera.main);
+        fluidMesh.vertices = verts;
+        fluidMesh.triangles = tris;
+        fluidMat = new Material(baseUnlit);
+        fluidMat.color = fluidColor;
     }
-    void drawContainer()
+    void constructContainer()
     {
-        Mesh mesh = new Mesh();
-
+        containerMesh = new Mesh();
         Vector2 outerHalf = (boxSize + (Vector2.one *containerThickness)) * 0.5f;
         Vector2 innerHalf = boxSize * 0.5f;
         Vector3[] verts = new Vector3[]
@@ -85,27 +132,59 @@ public class fluid : MonoBehaviour
             3, 4, 0,  3, 7, 4, // Left side
         };
 
-        mesh.vertices = verts;
-        mesh.triangles = tris;
+        containerMesh.vertices = verts;
+        containerMesh.triangles = tris;
 
-        Material containerMat = new Material(baseUnlit);
+        containerMat = new Material(baseUnlit);
         containerMat.color = containerColor;
-        Graphics.DrawMesh(mesh, Vector2.zero, Quaternion.identity, containerMat, 0, Camera.main);
     }
 
-    void collision()
+    void collision(int index)
     {
         Vector2 half = boxSize / 2;
 
-        if (Mathf.Abs(position.x) >= half.x - radius)
+        if (Mathf.Abs(positions[index].x) >= half.x - particleRadius)
         {
-            position.x = (half.x - radius) * Mathf.Sign(position.x);
-            velocity.y *= -1 * elasticity;
+            positions[index].x = (half.x - particleRadius) * Mathf.Sign(positions[index].x);
+            velocitys[index].y *= -1 * elasticity;
         }
-        if (Mathf.Abs(position.y) >= half.y - radius)
+        if (Mathf.Abs(positions[index].y) >= half.y - particleRadius)
         {
-            position.y = (half.y - radius) * Mathf.Sign(position.y);
-            velocity.y *= -1 * elasticity;
+            positions[index].y = (half.y - particleRadius) * Mathf.Sign(positions[index].y);
+            velocitys[index].y *= -1 * elasticity;
         }
+    }
+    float smoothing(float distance, float radius)
+    {
+        if (distance >= radius) return 0;
+
+        float volume = Mathf.PI * Mathf.Pow(radius, 4) / 6;
+        return (radius - distance) * (radius - distance) / volume;
+    }
+    float smoothingDer(float distance, float radius)
+    {
+        if (distance >= radius) return 0;
+
+        float scale = 12 / (Mathf.Pow(radius, 4) * Mathf.PI);
+        return (distance - radius) * scale;
+    }
+    float calculatePressure(float density)
+    {
+        float densityError = density - targetDensity;
+        return densityError * pressureMultiplier;
+    }
+
+    Vector2 pressureGradiant(int index)
+    {
+        Vector2 gradiant = Vector2.zero;
+
+        for (int i = 0; i < particlesAmount; i++)
+        {
+            if (i == index) continue;
+            Vector2 dir = positions[i] == positions[index] ? Random.insideUnitCircle.normalized : positions[i] - positions[index];
+            float avgPressure = (calculatePressure(densities[i]) + calculatePressure(densities[index])) / 2;
+            gradiant += avgPressure * dir.normalized * smoothingDer(dir.magnitude, dampingRadius) * mass / densities[i];
+        }
+        return gradiant;
     }
 }
