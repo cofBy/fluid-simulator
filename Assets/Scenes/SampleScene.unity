@@ -301,20 +301,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   baseUnlit: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
-  particleRadius: 0.2
+  particleRadius: 0.1
   segments: 8
   fluidColor: {r: 0, g: 0.69703305, b: 1, a: 1}
   containerThickness: 0.5
   containerColor: {r: 0.2804824, g: 0.2804824, b: 0.31132078, a: 1}
-  particlesAmount: 500
-  spacing: 1
-  dampingRadius: 1.2
+  particlesAmount: 1000
+  spacing: 0.3
+  dampingRadius: 0.3
   mass: 1
-  targetDensity: 1
-  pressureMultiplier: 25
-  gravity: 1
+  targetDensity: 1.5
+  pressureMultiplier: 5
+  gravity: 0
   elasticity: 1
-  boxSize: {x: 34.55556, y: 19}
+  boxSize: {x: 16, y: 9}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

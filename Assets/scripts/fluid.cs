@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UnityEngine;
 
 public class fluid : MonoBehaviour
@@ -55,24 +56,35 @@ public class fluid : MonoBehaviour
     }
     private void Update()
     {
-        for (int i = 0; i < particlesAmount; i++)
+        simulate(Time.deltaTime);
+        foreach (Vector2 pos in positions)
         {
-            velocitys[i] += new Vector2(0, -gravity) * Time.deltaTime;
-            densities[i] = calculateDensity(positions[i]);
-        }
-        for (int i = 0; i < particlesAmount; i++)   
-        {
-            Vector2 pressureAcc = pressureGradiant(i) / densities[i];
-            velocitys[i] += pressureAcc * Time.deltaTime;
-        }
-        for (int i = 0; i < particlesAmount; i++)
-        {
-            positions[i] += velocitys[i] * Time.deltaTime;
-            Debug.DrawRay(positions[i], velocitys[i]);
-            collision(i);
-            Graphics.DrawMesh(fluidMesh, positions[i], Quaternion.identity, fluidMat, 0, Camera.main);
+            Graphics.DrawMesh(fluidMesh, pos, Quaternion.identity, fluidMat, 0, Camera.main);
         }
         Graphics.DrawMesh(containerMesh, Vector2.zero, Quaternion.identity, containerMat, 0, Camera.main);
+    }
+
+    void simulate(float dt)
+    {
+        Parallel.For(0, particlesAmount, i =>
+        {
+            velocitys[i] += new Vector2(0, -gravity) * dt;
+        });
+        Parallel.For(0, particlesAmount, i =>
+        {
+            densities[i] = calculateDensity(positions[i]);
+        });
+        Parallel.For(0, particlesAmount, i =>
+        {
+            Vector2 pressureAcc = pressureGradiant(i) / densities[i];
+            velocitys[i] += pressureAcc * dt;
+        });
+        Parallel.For(0, particlesAmount, i =>
+        {
+            positions[i] += velocitys[i] * dt;
+            collision(i);
+            Debug.DrawRay(positions[i], velocitys[i]);
+        });
     }
 
     float calculateDensity(Vector2 pos)
@@ -83,7 +95,7 @@ public class fluid : MonoBehaviour
             float distance = Vector2.Distance(otherPos, pos);
             density += mass * smoothing(distance, dampingRadius);
         }
-        return density;
+        return Mathf.Max(density, 0.001f);
     }
     void constructCircle()
     {
@@ -181,7 +193,7 @@ public class fluid : MonoBehaviour
         for (int i = 0; i < particlesAmount; i++)
         {
             if (i == index) continue;
-            Vector2 dir = positions[i] == positions[index] ? Random.insideUnitCircle.normalized : positions[i] - positions[index];
+            Vector2 dir = positions[i] - positions[index];
             float avgPressure = (calculatePressure(densities[i]) + calculatePressure(densities[index])) / 2;
             gradiant += avgPressure * dir.normalized * smoothingDer(dir.magnitude, dampingRadius) * mass / densities[i];
         }
