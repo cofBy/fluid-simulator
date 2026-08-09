@@ -8,9 +8,10 @@ public class fluid : MonoBehaviour
 
     public float particleRadius;
     public int segments;
-    public Color fluidColor;
+    public Gradient fluidColor;
     Mesh fluidMesh;
     Material fluidMat;
+    MaterialPropertyBlock mpb;
 
     public float containerThickness;
     public Color containerColor;
@@ -18,8 +19,10 @@ public class fluid : MonoBehaviour
     Material containerMat;
 
     [Header("fluid")]
-    public int particlesAmount;
+    public Vector2Int rowsCols;
+    int particlesAmount;
     public float spacing;
+
     Vector2[] nextPositions;
     Vector2[] positions;
     Vector2[] velocitys;
@@ -39,30 +42,39 @@ public class fluid : MonoBehaviour
 
     private void Awake()
     {
+        particlesAmount = rowsCols.x * rowsCols.y;
         positions = new Vector2[particlesAmount];
         nextPositions = new Vector2[particlesAmount];
         velocitys = new Vector2[particlesAmount];
         densities = new float[particlesAmount];
         
-        int rows = (int)Mathf.Sqrt(particlesAmount);
-        int cols = (particlesAmount + rows - 1) / rows;
         float space = particlesAmount * 2 + spacing;
         for (int i = 0; i < particlesAmount; i++)
         {
-            float x = (i % rows - rows / 2f + 0.5f) * spacing;
-            float y = (i / rows - cols / 2f + 0.5f) * spacing;
+            float x = (i % rowsCols.x - rowsCols.x * 0.5f + 0.5f) * spacing;
+            float y = (i / rowsCols.x - rowsCols.y * 0.5f + 0.5f) * spacing;
             positions[i] = new Vector2(x, y);
         }
 
+        mpb = new MaterialPropertyBlock();
         constructCircle();
         constructContainer();
     }
     private void Update()
     {
         simulate(Time.deltaTime);
-        foreach (Vector2 pos in positions)
+
+        float maxVel = 0;
+        for (int i = 0; i < particlesAmount; i++)
         {
-            Graphics.DrawMesh(fluidMesh, pos, Quaternion.identity, fluidMat, 0, Camera.main);
+            float vel = velocitys[i].magnitude;
+            if (vel > maxVel) maxVel = Mathf.Max(vel, 0.01f);
+        }
+
+        for (int i = 0; i < particlesAmount; i++)
+        {
+            mpb.SetColor("_BaseColor", fluidColor.Evaluate(Mathf.Clamp01(velocitys[i].magnitude / maxVel)));
+            Graphics.DrawMesh(fluidMesh, positions[i], Quaternion.identity, fluidMat, 0, Camera.main, 0, mpb);
         }
         Graphics.DrawMesh(containerMesh, Vector2.zero, Quaternion.identity, containerMat, 0, Camera.main);
     }
@@ -125,7 +137,7 @@ public class fluid : MonoBehaviour
         fluidMesh.vertices = verts;
         fluidMesh.triangles = tris;
         fluidMat = new Material(baseUnlit);
-        fluidMat.color = fluidColor;
+        fluidMat.color = fluidColor.Evaluate(0);
     }
     void constructContainer()
     {

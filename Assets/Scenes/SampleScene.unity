@@ -301,21 +301,50 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: '::'
   baseUnlit: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
-  particleRadius: 0.2
+  particleRadius: 0.1
   segments: 12
-  fluidColor: {r: 0, g: 0.69703305, b: 1, a: 1}
+  fluidColor:
+    serializedVersion: 2
+    key0: {r: 0.14346743, g: 0.61519325, b: 0.9811321, a: 1}
+    key1: {r: 0.5803922, g: 0.727472, b: 0.99215686, a: 1}
+    key2: {r: 1, g: 1, b: 1, a: 0}
+    key3: {r: 0, g: 0, b: 0, a: 0}
+    key4: {r: 0, g: 0, b: 0, a: 0}
+    key5: {r: 0, g: 0, b: 0, a: 0}
+    key6: {r: 0, g: 0, b: 0, a: 0}
+    key7: {r: 0, g: 0, b: 0, a: 0}
+    ctime0: 16384
+    ctime1: 32768
+    ctime2: 49151
+    ctime3: 0
+    ctime4: 0
+    ctime5: 0
+    ctime6: 0
+    ctime7: 0
+    atime0: 0
+    atime1: 65535
+    atime2: 0
+    atime3: 0
+    atime4: 0
+    atime5: 0
+    atime6: 0
+    atime7: 0
+    m_Mode: 2
+    m_ColorSpace: 0
+    m_NumColorKeys: 3
+    m_NumAlphaKeys: 2
   containerThickness: 0.5
   containerColor: {r: 0.2804824, g: 0.2804824, b: 0.31132078, a: 1}
-  particlesAmount: 210
-  spacing: 1
+  rowsCols: {x: 58, y: 30}
+  spacing: 0.5
   pressureRadius: 3
-  mass: 1
-  targetDensity: 1
-  pressureMultiplier: 50
-  damping: 0.1
-  gravity: 1.5
-  elasticity: 0.95
-  boxSize: {x: 17, y: 17}
+  mass: 0.5
+  targetDensity: 1.35
+  pressureMultiplier: 100
+  damping: 0.2
+  gravity: 3
+  elasticity: 1
+  boxSize: {x: 31, y: 17}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
