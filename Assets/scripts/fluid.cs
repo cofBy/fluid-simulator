@@ -29,6 +29,7 @@ public class fluid : MonoBehaviour
     public float mass;
     public float targetDensity;
     public float pressureMultiplier;
+    public float damping;
 
     public float gravity;
     public float elasticity;
@@ -86,14 +87,20 @@ public class fluid : MonoBehaviour
         {
             positions[i] += velocitys[i] * dt;
             collision(i);
-            Debug.DrawRay(positions[i], velocitys[i]);
+        });
+        Parallel.For(0, particlesAmount, i =>
+        {
+            Vector2 v = velocitys[i];
+            float dampX = Mathf.Min(Mathf.Abs(v.x), damping * dt) * Mathf.Sign(v.x);
+            float dampY = Mathf.Min(Mathf.Abs(v.y), damping * dt) * Mathf.Sign(v.y);
+            velocitys[i] -= new Vector2(dampX, dampY);
         });
     }
 
     float calculateDensity(Vector2 pos)
     {
         float density = 0;
-        foreach (Vector2 otherPos in positions)
+        foreach (Vector2 otherPos in nextPositions)
         {
             float distance = Vector2.Distance(otherPos, pos);
             density += mass * smoothing(distance, pressureRadius);
@@ -161,7 +168,7 @@ public class fluid : MonoBehaviour
         if (Mathf.Abs(positions[index].x) >= half.x - particleRadius)
         {
             positions[index].x = (half.x - particleRadius) * Mathf.Sign(positions[index].x);
-            velocitys[index].y *= -1 * elasticity;
+            velocitys[index].x *= -1 * elasticity;
         }
         if (Mathf.Abs(positions[index].y) >= half.y - particleRadius)
         {

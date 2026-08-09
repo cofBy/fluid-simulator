@@ -225,7 +225,7 @@ Camera:
   far clip plane: 1000
   field of view: 34
   orthographic: 1
-  orthographic size: 10
+  orthographic size: 9
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -306,15 +306,16 @@ MonoBehaviour:
   fluidColor: {r: 0, g: 0.69703305, b: 1, a: 1}
   containerThickness: 0.5
   containerColor: {r: 0.2804824, g: 0.2804824, b: 0.31132078, a: 1}
-  particlesAmount: 200
+  particlesAmount: 210
   spacing: 1
-  dampingRadius: 1.2
+  pressureRadius: 3
   mass: 1
   targetDensity: 1
-  pressureMultiplier: 100
-  gravity: 1
-  elasticity: 1
-  boxSize: {x: 19, y: 19}
+  pressureMultiplier: 50
+  damping: 0.1
+  gravity: 1.5
+  elasticity: 0.95
+  boxSize: {x: 17, y: 17}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
