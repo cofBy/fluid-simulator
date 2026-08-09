@@ -20,11 +20,12 @@ public class fluid : MonoBehaviour
     [Header("fluid")]
     public int particlesAmount;
     public float spacing;
+    Vector2[] nextPositions;
     Vector2[] positions;
     Vector2[] velocitys;
     float[] densities;
 
-    public float dampingRadius;
+    public float pressureRadius;
     public float mass;
     public float targetDensity;
     public float pressureMultiplier;
@@ -38,6 +39,7 @@ public class fluid : MonoBehaviour
     private void Awake()
     {
         positions = new Vector2[particlesAmount];
+        nextPositions = new Vector2[particlesAmount];
         velocitys = new Vector2[particlesAmount];
         densities = new float[particlesAmount];
         
@@ -69,10 +71,11 @@ public class fluid : MonoBehaviour
         Parallel.For(0, particlesAmount, i =>
         {
             velocitys[i] += new Vector2(0, -gravity) * dt;
+            nextPositions[i] = positions[i] + velocitys[i] * dt;
         });
         Parallel.For(0, particlesAmount, i =>
         {
-            densities[i] = calculateDensity(positions[i]);
+            densities[i] = calculateDensity(nextPositions[i]);
         });
         Parallel.For(0, particlesAmount, i =>
         {
@@ -93,7 +96,7 @@ public class fluid : MonoBehaviour
         foreach (Vector2 otherPos in positions)
         {
             float distance = Vector2.Distance(otherPos, pos);
-            density += mass * smoothing(distance, dampingRadius);
+            density += mass * smoothing(distance, pressureRadius);
         }
         return Mathf.Max(density, 0.001f);
     }
@@ -195,7 +198,7 @@ public class fluid : MonoBehaviour
             if (i == index) continue;
             Vector2 dir = positions[i] - positions[index];
             float avgPressure = (calculatePressure(densities[i]) + calculatePressure(densities[index])) / 2;
-            gradiant += avgPressure * dir.normalized * smoothingDer(dir.magnitude, dampingRadius) * mass / densities[i];
+            gradiant += avgPressure * dir.normalized * smoothingDer(dir.magnitude, pressureRadius) * mass / densities[i];
         }
         return gradiant;
     }
