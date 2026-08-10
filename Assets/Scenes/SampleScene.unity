@@ -345,6 +345,8 @@ MonoBehaviour:
   gravity: 3
   elasticity: 0.5
   boxSize: {x: 31, y: 17}
+  interactionForceRadius: 1
+  interactionForce: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

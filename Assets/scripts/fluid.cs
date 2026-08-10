@@ -63,6 +63,10 @@ public class fluid : MonoBehaviour
     [Header("container")]
     public Vector2 boxSize;
 
+    [Header("interacting")]
+    public float interactionForceRadius;
+    public float interactionForce;
+
     private void Awake()
     {
         particlesAmount = rowsCols.x * rowsCols.y;
@@ -110,7 +114,6 @@ public class fluid : MonoBehaviour
         }
         Graphics.DrawMesh(containerMesh, Vector2.zero, Quaternion.identity, containerMat, 0, Camera.main);
     }
-
     void simulate(float dt)
     {
         Parallel.For(0, particlesAmount, i =>
@@ -118,6 +121,20 @@ public class fluid : MonoBehaviour
             velocitys[i] += new Vector2(0, -gravity) * dt;
             nextPositions[i] = positions[i] + velocitys[i] / 120f;
         });
+
+        float mouseInput = input(KeyCode.Mouse0, KeyCode.Mouse1);
+        if (mouseInput != 0)
+        {
+            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Parallel.For(0, particlesAmount, i =>
+            {
+                if (Vector2.Distance(mousePos, nextPositions[i]) < interactionForceRadius)
+                {
+                    Vector2 dir = (nextPositions[i] - mousePos).normalized;
+                    velocitys[i] += dir * mouseInput * interactionForce;
+                }
+            });
+        }
 
         updateCells(nextPositions);
         Parallel.For(0, particlesAmount, i =>
@@ -146,6 +163,19 @@ public class fluid : MonoBehaviour
             float dampY = Mathf.Min(Mathf.Abs(v.y), damping * dt) * Mathf.Sign(v.y);
             velocitys[i] -= new Vector2(dampX, dampY);
         });
+    }
+    float input(KeyCode posKey, KeyCode negKey)
+    {
+        float x = 0;
+        if (Input.GetKey(posKey))
+        {
+            x += 1;
+        }
+        if (Input.GetKey(negKey))
+        {
+            x -= 1;
+        }
+        return x;
     }
 
     float calculateDensity(int index)
