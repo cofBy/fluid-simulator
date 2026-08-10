@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -37,6 +39,27 @@ public class fluid : MonoBehaviour
     public float gravity;
     public float elasticity;
 
+    [Header("spatial partitioning")]
+    entry[] cells;
+    int[] firstIndices;
+    List<int>[] neighborBuffers;
+
+    struct entry : IComparable<entry>
+    {
+        public int index;
+        public uint key;
+
+        public entry(int index, uint key)
+        {
+            this.index = index;
+            this.key = key;
+        }
+        public int CompareTo(entry other)
+        {
+            return key.CompareTo(other.key);
+        }
+    }
+
     [Header("container")]
     public Vector2 boxSize;
 
@@ -47,7 +70,16 @@ public class fluid : MonoBehaviour
         nextPositions = new Vector2[particlesAmount];
         velocitys = new Vector2[particlesAmount];
         densities = new float[particlesAmount];
-        
+
+        cells = new entry[particlesAmount];
+        firstIndices = new int[particlesAmount];
+
+        neighborBuffers = new List<int>[particlesAmount];
+        for (int i = 0; i < particlesAmount; i++)
+        {
+            neighborBuffers[i] = new List<int>();
+        }
+
         float space = particlesAmount * 2 + spacing;
         for (int i = 0; i < particlesAmount; i++)
         {
@@ -84,11 +116,18 @@ public class fluid : MonoBehaviour
         Parallel.For(0, particlesAmount, i =>
         {
             velocitys[i] += new Vector2(0, -gravity) * dt;
-            nextPositions[i] = positions[i] + velocitys[i] * dt;
+            nextPositions[i] = positions[i] + velocitys[i] / 120f;
         });
+
+        updateCells(nextPositions);
         Parallel.For(0, particlesAmount, i =>
         {
-            densities[i] = calculateDensity(nextPositions[i]);
+            cellsInRadius(nextPositions[i], neighborBuffers[i]);
+        });
+
+        Parallel.For(0, particlesAmount, i =>
+        {
+            densities[i] = calculateDensity(i);
         });
         Parallel.For(0, particlesAmount, i =>
         {
@@ -109,11 +148,15 @@ public class fluid : MonoBehaviour
         });
     }
 
-    float calculateDensity(Vector2 pos)
+    float calculateDensity(int index)
     {
         float density = 0;
-        foreach (Vector2 otherPos in nextPositions)
+        Vector2 pos = nextPositions[index];
+        List<int> neighbors = neighborBuffers[index];
+
+        for (int n = 0; n < neighbors.Count; n++)
         {
+            Vector2 otherPos = nextPositions[neighbors[n]];
             float distance = Vector2.Distance(otherPos, pos);
             density += mass * smoothing(distance, pressureRadius);
         }
@@ -142,7 +185,7 @@ public class fluid : MonoBehaviour
     void constructContainer()
     {
         containerMesh = new Mesh();
-        Vector2 outerHalf = (boxSize + (Vector2.one *containerThickness)) * 0.5f;
+        Vector2 outerHalf = (boxSize + (Vector2.one * containerThickness)) * 0.5f;
         Vector2 innerHalf = boxSize * 0.5f;
         Vector3[] verts = new Vector3[]
         {
@@ -188,6 +231,7 @@ public class fluid : MonoBehaviour
             velocitys[index].y *= -1 * elasticity;
         }
     }
+
     float smoothing(float distance, float radius)
     {
         if (distance >= radius) return 0;
@@ -207,18 +251,92 @@ public class fluid : MonoBehaviour
         float densityError = density - targetDensity;
         return densityError * pressureMultiplier;
     }
-
     Vector2 pressureGradiant(int index)
     {
         Vector2 gradiant = Vector2.zero;
+        List<int> neighbors = neighborBuffers[index];
 
-        for (int i = 0; i < particlesAmount; i++)
+        for (int n = 0; n < neighbors.Count; n++)
         {
+            int i = neighbors[n];
             if (i == index) continue;
             Vector2 dir = positions[i] - positions[index];
             float avgPressure = (calculatePressure(densities[i]) + calculatePressure(densities[index])) / 2;
             gradiant += avgPressure * dir.normalized * smoothingDer(dir.magnitude, pressureRadius) * mass / densities[i];
         }
         return gradiant;
+    }
+
+    void updateCells(Vector2[] points)
+    {
+        Parallel.For(0, points.Length, i =>
+        {
+            (int x, int y) = cellCoord(points[i]);
+            uint cellKey = keyCell(hashCell(x, y));
+            cells[i] = new entry(i, cellKey);
+            firstIndices[i] = int.MaxValue;
+        });
+
+        Array.Sort(cells);
+
+        Parallel.For(0, points.Length, i =>
+        {
+            uint key = cells[i].key;
+            uint keyPrev = i == 0 ? uint.MaxValue : cells[i - 1].key;
+            if (key != keyPrev) firstIndices[key] = i;
+        });
+    }
+
+    void cellsInRadius(Vector2 point, List<int> result)
+    {
+        result.Clear();
+
+        (int, int)[] offsetCells =
+        {
+            cellCoord(point),
+            cellCoord(point + new Vector2(+pressureRadius, 0)),
+            cellCoord(point + new Vector2(-pressureRadius, 0)),
+            cellCoord(point + new Vector2(0, +pressureRadius)),
+            cellCoord(point + new Vector2(0, -pressureRadius)),
+            cellCoord(point + new Vector2(+pressureRadius, +pressureRadius)),
+            cellCoord(point + new Vector2(+pressureRadius, -pressureRadius)),
+            cellCoord(point + new Vector2(-pressureRadius, +pressureRadius)),
+            cellCoord(point + new Vector2(-pressureRadius, -pressureRadius))
+        };
+
+        foreach ((int x, int y) in offsetCells)
+        {
+            uint key = keyCell(hashCell(x, y));
+            int cellFirstIndex = firstIndices[key];
+
+            if (cellFirstIndex == int.MaxValue) continue;
+
+            for (int i = cellFirstIndex; i < cells.Length; i++)
+            {
+                if (cells[i].key != key) break;
+
+                int particleIndex = cells[i].index;
+
+                if (Vector2.Distance(nextPositions[particleIndex], point) < pressureRadius)
+                {
+                    result.Add(particleIndex);
+                }
+            }
+        }
+    }
+    (int x, int y) cellCoord(Vector2 point)
+    {
+        Vector2 cell = (point / pressureRadius);
+        return (Mathf.FloorToInt(cell.x), Mathf.FloorToInt(cell.y));
+    }
+    uint hashCell(int cellx, int celly)
+    {
+        uint a = (uint)cellx * 15823;
+        uint b = (uint)celly * 9737333;
+        return a + b;
+    }
+    uint keyCell(uint hash)
+    {
+        return hash % (uint)cells.Length;
     }
 }

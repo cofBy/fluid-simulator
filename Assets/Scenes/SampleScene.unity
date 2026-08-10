@@ -302,11 +302,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   baseUnlit: {fileID: 2100000, guid: d336897483d35d3489bf4936cc5cee21, type: 2}
   particleRadius: 0.1
-  segments: 12
+  segments: 8
   fluidColor:
     serializedVersion: 2
     key0: {r: 0.14346743, g: 0.61519325, b: 0.9811321, a: 1}
-    key1: {r: 0.5803922, g: 0.727472, b: 0.99215686, a: 1}
+    key1: {r: 0.5803922, g: 0.71712166, b: 0.99215686, a: 1}
     key2: {r: 1, g: 1, b: 1, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
@@ -335,15 +335,15 @@ MonoBehaviour:
     m_NumAlphaKeys: 2
   containerThickness: 0.5
   containerColor: {r: 0.2804824, g: 0.2804824, b: 0.31132078, a: 1}
-  rowsCols: {x: 58, y: 30}
-  spacing: 0.5
-  pressureRadius: 3
+  rowsCols: {x: 87, y: 45}
+  spacing: 0.25
+  pressureRadius: 1
   mass: 0.5
-  targetDensity: 1.35
+  targetDensity: 4
   pressureMultiplier: 100
   damping: 0.2
   gravity: 3
-  elasticity: 1
+  elasticity: 0.5
   boxSize: {x: 31, y: 17}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
