@@ -35,6 +35,7 @@ public class fluid : MonoBehaviour
     public float targetDensity;
     public float pressureMultiplier;
     public float damping;
+    public float viscosityStrength;
 
     public float gravity;
     public float elasticity;
@@ -116,48 +117,46 @@ public class fluid : MonoBehaviour
     }
     void simulate(float dt)
     {
+        float mouseInput = input(KeyCode.Mouse0, KeyCode.Mouse1);
+        Vector2 mousePos = mouseInput != 0 ? (Vector2)Camera.main.ScreenToWorldPoint(Input.mousePosition) : Vector2.zero;
+
         Parallel.For(0, particlesAmount, i =>
         {
             velocitys[i] += new Vector2(0, -gravity) * dt;
             nextPositions[i] = positions[i] + velocitys[i] / 120f;
+
+            if (mouseInput != 0 && Vector2.Distance(mousePos, nextPositions[i]) < interactionForceRadius)
+            {
+                Vector2 dir = (nextPositions[i] - mousePos).normalized;
+                velocitys[i] += dir * mouseInput * interactionForce;
+            }
         });
 
-        float mouseInput = input(KeyCode.Mouse0, KeyCode.Mouse1);
-        if (mouseInput != 0)
-        {
-            Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            Parallel.For(0, particlesAmount, i =>
-            {
-                if (Vector2.Distance(mousePos, nextPositions[i]) < interactionForceRadius)
-                {
-                    Vector2 dir = (nextPositions[i] - mousePos).normalized;
-                    velocitys[i] += dir * mouseInput * interactionForce;
-                }
-            });
-        }
-
         updateCells(nextPositions);
+
         Parallel.For(0, particlesAmount, i =>
         {
             cellsInRadius(nextPositions[i], neighborBuffers[i]);
-        });
-
-        Parallel.For(0, particlesAmount, i =>
-        {
             densities[i] = calculateDensity(i);
         });
+
         Parallel.For(0, particlesAmount, i =>
         {
             Vector2 pressureAcc = pressureGradiant(i) / densities[i];
             velocitys[i] += pressureAcc * dt;
         });
+
+        Parallel.For(0, particlesAmount, i =>
+        {
+            Vector2 viscosityAcc = viscosityGradiant(i) / densities[i];
+            velocitys[i] += viscosityAcc * dt;
+        });
+
         Parallel.For(0, particlesAmount, i =>
         {
             positions[i] += velocitys[i] * dt;
             collision(i);
-        });
-        Parallel.For(0, particlesAmount, i =>
-        {
+
             Vector2 v = velocitys[i];
             float dampX = Mathf.Min(Mathf.Abs(v.x), damping * dt) * Mathf.Sign(v.x);
             float dampY = Mathf.Min(Mathf.Abs(v.y), damping * dt) * Mathf.Sign(v.y);
@@ -295,6 +294,20 @@ public class fluid : MonoBehaviour
             gradiant += avgPressure * dir.normalized * smoothingDer(dir.magnitude, pressureRadius) * mass / densities[i];
         }
         return gradiant;
+    }
+    Vector2 viscosityGradiant(int index)
+    {
+        Vector2 gradiant = Vector2.zero;
+        List<int> neighbors = neighborBuffers[index];
+
+        for (int n = 0; n < neighbors.Count; n++)
+        {
+            int i = neighbors[n];
+            if (i == index) continue;
+            Vector2 dir = positions[i] - positions[index];
+            gradiant += dir * smoothing(dir.magnitude, pressureRadius);
+        }
+        return gradiant * viscosityStrength;
     }
 
     void updateCells(Vector2[] points)

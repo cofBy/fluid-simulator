@@ -1,0 +1,43 @@
+#pragma kernel CSParticle
+
+struct particle
+{
+    float2 pos;
+    float2 vel;
+    float life;
+};
+RWStructuredBuffer<particle> particlesBuffer;
+
+float dt;
+float2 mousePos;
+float2 spawnerPos;
+
+float xorshift(uint hash)
+{
+    uint x = hash;
+    x ^= (x << 13);
+    x ^= (x >> 17);
+    x ^= (x << 5);
+    return x / 4294967295.0;
+}
+
+void respawn(uint id)
+{
+    float2 randomDir = float2(xorshift(id + 1), xorshift(id + 120));
+    particlesBuffer[id].pos = spawnerPos;
+    particlesBuffer[id].vel = randomDir;
+    particlesBuffer[id].life = 5;
+}
+
+[numthreads(256, 1, 1)]
+void CSParticle(uint3 id : SV_DispatchThreadID)
+{
+    particle current = particlesBuffer[id.x];
+    
+    current.life -= dt;
+    current.vel += normalize(mousePos - current.pos) * current.life;
+    current.pos += current.vel * dt;
+
+    particlesBuffer[id.x] = current;
+    if (current.life <= 0) respawn(id.x);
+}

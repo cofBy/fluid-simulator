@@ -306,16 +306,16 @@ MonoBehaviour:
   fluidColor:
     serializedVersion: 2
     key0: {r: 0.14346743, g: 0.61519325, b: 0.9811321, a: 1}
-    key1: {r: 0.5803922, g: 0.71712166, b: 0.99215686, a: 1}
+    key1: {r: 0.5803922, g: 0.64457077, b: 0.99215686, a: 1}
     key2: {r: 1, g: 1, b: 1, a: 0}
     key3: {r: 0, g: 0, b: 0, a: 0}
     key4: {r: 0, g: 0, b: 0, a: 0}
     key5: {r: 0, g: 0, b: 0, a: 0}
     key6: {r: 0, g: 0, b: 0, a: 0}
     key7: {r: 0, g: 0, b: 0, a: 0}
-    ctime0: 16384
+    ctime0: 6554
     ctime1: 32768
-    ctime2: 49151
+    ctime2: 65535
     ctime3: 0
     ctime4: 0
     ctime5: 0
@@ -339,13 +339,14 @@ MonoBehaviour:
   spacing: 0.25
   pressureRadius: 1
   mass: 0.5
-  targetDensity: 4
-  pressureMultiplier: 100
+  targetDensity: 6
+  pressureMultiplier: 500
   damping: 0.2
+  viscosityStrength: 0.35
   gravity: 3
   elasticity: 0.5
   boxSize: {x: 31, y: 17}
-  interactionForceRadius: 1
+  interactionForceRadius: 2.5
   interactionForce: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
