@@ -286,7 +286,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::particleFun
   spawner: {fileID: 2059157181}
-  particleAmount: 1000000
+  particleAmount: 100000
   mat: {fileID: 2100000, guid: 63e69600045a2e34daa372eb06ab7fb6, type: 2}
   computeShader: {fileID: 7200000, guid: 0c8f61d419af7c34ebc9be3ee82c130f, type: 3}
 --- !u!4 &2059157181

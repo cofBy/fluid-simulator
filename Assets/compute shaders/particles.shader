@@ -30,7 +30,6 @@ Shader "Custom/particles"
 
             struct Attributes
             {
-                float4 positionOS : POSITION;
                 uint instanceID : SV_InstanceID;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
@@ -55,7 +54,7 @@ Shader "Custom/particles"
             {
                 Varyings OUT;
                 particle current = particlesBuffer[IN.instanceID];
-                OUT.positionHCS = TransformObjectToHClip(float3(current.pos, 0));
+                OUT.positionHCS = TransformWorldToHClip(float3(current.pos, 0));
                 OUT.color = lerp(_endColor, _startColor, current.life / 5.0);
                 OUT.size = _radius;
                 return OUT;

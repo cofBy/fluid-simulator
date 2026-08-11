@@ -50,7 +50,7 @@ public class particleFun : MonoBehaviour
         computeShader.SetBuffer(kernalID, "particlesBuffer", particlesBuffer);
         mat.SetBuffer("particlesBuffer", particlesBuffer);
 
-        rp = new RenderParams();
+        rp = new RenderParams(mat);
         rp.worldBounds = new Bounds(Vector3.zero, Vector3.one * 100000);
     }
 
