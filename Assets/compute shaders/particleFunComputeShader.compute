@@ -11,6 +11,7 @@ RWStructuredBuffer<particle> particlesBuffer;
 float dt;
 float2 mousePos;
 float2 spawnerPos;
+float2 bounds;
 
 float xorshift(uint hash)
 {
@@ -37,6 +38,17 @@ void CSParticle(uint3 id : SV_DispatchThreadID)
     current.life -= dt;
     current.vel += normalize(mousePos - current.pos) * current.life;
     current.pos += current.vel * dt;
+    
+    if (abs(current.pos.x) > bounds.x)
+    {
+        current.pos.x = bounds.x * sign(current.pos.x);
+        current.vel *= -1;
+    }
+    if (abs(current.pos.y) > bounds.y)
+    {
+        current.pos.y = bounds.y * sign(current.pos.y);
+        current.vel.y *= -1;
+    }
 
     particlesBuffer[id.x] = current;
     if (current.life <= 0) respawn(id.x);

@@ -2,6 +2,7 @@ Shader "Custom/particles"
 {
     Properties
     {
+        _MainTex("main tex", 2D) = "white" {}
         _radius("point radius", Float) = 5.0
         _startColor("start color", Color) = (1,0,1,1)
         _endColor("end color", Color) = (0,1,0,1)
@@ -30,6 +31,7 @@ Shader "Custom/particles"
 
             struct Attributes
             {
+                float4 positionOS : POSITION;
                 uint instanceID : SV_InstanceID;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };

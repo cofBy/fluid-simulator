@@ -22,7 +22,6 @@ public class particleFun : MonoBehaviour
 
     [Header("rendering")]
     public Material mat;
-    RenderParams rp;
 
     [Header("computing")]
     public ComputeShader computeShader;
@@ -50,8 +49,9 @@ public class particleFun : MonoBehaviour
         computeShader.SetBuffer(kernalID, "particlesBuffer", particlesBuffer);
         mat.SetBuffer("particlesBuffer", particlesBuffer);
 
-        rp = new RenderParams(mat);
-        rp.worldBounds = new Bounds(Vector3.zero, Vector3.one * 100000);
+        computeShader.SetFloats("bounds", new float[2] {Camera.main.orthographicSize * ((float)Screen.width / Screen.height), Camera.main.orthographicSize});
+        mat.SetFloat("cameraSize", Camera.main.orthographicSize);
+        mat.SetFloat("aspectRatio", (float)Screen.width / Screen.height);
     }
 
     private void Update()
@@ -62,8 +62,6 @@ public class particleFun : MonoBehaviour
         computeShader.SetFloats("mousePos", new float[2]{ worldCursor.x, worldCursor.y});
         computeShader.SetFloats("spawnerPos", new float[2]{ spawner.position.x, spawner.position.y});
         computeShader.Dispatch(kernalID, groupSizeX, 1, 1);
-
-        Graphics.RenderPrimitives(rp, MeshTopology.Points, 1, particleAmount);
     }
 
     private void OnDestroy()
