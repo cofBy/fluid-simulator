@@ -11,11 +11,13 @@ public class particleFluid : MonoBehaviour
     struct particle
     {
         public Vector2 pos;
+        public Vector2 nextPos;
         public Vector2 vel;
         public float density;
-        public particle(Vector2 newPos, Vector2 newVel, float newDensity)
+        public particle(Vector2 newPos, Vector2 newNextPos, Vector2 newVel, float newDensity)
         {
             pos = newPos;
+            nextPos = newNextPos;
             vel = newVel;
             density = newDensity;
         }
@@ -23,14 +25,14 @@ public class particleFluid : MonoBehaviour
 
     [Header("fluid simulating")]
     public float pressureRadius;
-    public float mass;
+    [Range(0, 1)] public float mass;
     public float targetDensity;
     public float pressureMultiplier;
-    public float damping;
-    public float viscosityStrength;
+    [Range(0, 1)] public float damping;
+    [Range(0, 1)] public float viscosityStrength;
 
     public float gravity;
-    public float elasticity;
+    [Range(0, 1)] public float elasticity;
 
     public Vector2 bounds;
 
@@ -61,10 +63,10 @@ public class particleFluid : MonoBehaviour
         {
             float x = (i % rowsCols.x - rowsCols.x * 0.5f + 0.5f) * spacing;
             float y = (i / rowsCols.x - rowsCols.y * 0.5f + 0.5f) * spacing;
-            particles[i] = new particle(new Vector2(x, y), Vector2.zero, targetDensity > 0 ? targetDensity : 1f);
+            particles[i] = new particle(new Vector2(x, y), new Vector2(x, y), Vector2.zero, targetDensity > 0 ? targetDensity : 1f);
         }
 
-        particlesBuffer = new ComputeBuffer(particleAmount, 5 * sizeof(float));
+        particlesBuffer = new ComputeBuffer(particleAmount, 7 * sizeof(float));
         particlesBuffer.SetData(particles);
 
         mat.SetBuffer("particlesBuffer", particlesBuffer);
@@ -104,8 +106,8 @@ public class particleFluid : MonoBehaviour
         computeShader.SetFloat("mass", mass);
         computeShader.SetFloat("targetDensity", targetDensity);
         computeShader.SetFloat("pressureMultiplier", pressureMultiplier);
-        computeShader.SetFloat("damping", damping);
         computeShader.SetFloat("viscosityStrength", viscosityStrength);
+        computeShader.SetFloat("damping", damping);
         computeShader.SetFloat("gravity", gravity);
         computeShader.SetFloat("elasticity", elasticity);
     }

@@ -4,6 +4,7 @@
 struct particle
 {
     float2 pos;
+    float2 nextPos;
     float2 vel;
     float dens;
 };
@@ -57,7 +58,7 @@ float calculateDensity(uint index)
     float density = 0;
     for (uint i = 0; i < particleCount; i++)
     {
-        float dst = distance(particlesBuffer[i].pos, particlesBuffer[index].pos);
+        float dst = distance(particlesBuffer[i].nextPos, particlesBuffer[index].nextPos);
         density += mass * smoothing(dst, pressureRadius);
     }
     return density;
@@ -91,10 +92,12 @@ void CSParticle(uint3 id : SV_DispatchThreadID)
     particle current = particlesBuffer[id.x];
 
     current.dens = calculateDensity(id.x);
+    current.nextPos = current.pos + current.vel / 60;
     
+    float2 dampingAcc = damping * -sign(current.vel) * dt;
     float2 pressureAcc = pressureGradiant(id.x) / current.dens * dt;
     float2 gravityAcc = float2(0, -gravity) * dt;
-    current.vel += pressureAcc + gravityAcc;
+    current.vel += pressureAcc + gravityAcc + dampingAcc;
     current.pos += current.vel * dt;
     if (abs(current.pos.x) >= bounds.x)
     {
