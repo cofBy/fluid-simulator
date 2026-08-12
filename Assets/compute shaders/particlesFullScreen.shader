@@ -2,10 +2,9 @@ Shader "Custom/particlesFullScreen"
 {
     Properties
     {
-        _particleColor("particle color", Color) = (1, 1, 1, 1)
-        _defultColor("back ground color", Color) = (0, 0, 0, 1)
-        _radius("ball radius", Float) = 0.5
         [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
+        _color1("color 1", Color) = (1, 1, 1, 1)
+        _color2("color 2", Color) = (0, 0, 1, 1)
     }
 
     SubShader
@@ -18,20 +17,8 @@ Shader "Custom/particlesFullScreen"
 
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 4.5
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-
-            struct particle
-            {
-                float2 pos;
-                float2 vel;
-                float life;
-            };
-            StructuredBuffer<particle> particlesBuffer;
-
-            float aspectRatio;
-            float cameraSize;
 
             struct Attributes
             {
@@ -49,37 +36,25 @@ Shader "Custom/particlesFullScreen"
             SAMPLER(sampler_BaseMap);
 
             CBUFFER_START(UnityPerMaterial)
-                half4 _BaseColor;
                 float4 _BaseMap_ST;
-                float4 _particleColor;
-                float4 _defultColor;
-                float _radius;
+                float4 _color1;
+                float4 _color2;
             CBUFFER_END
 
             Varyings vert(Attributes IN)
             {
                 Varyings OUT;
                 OUT.positionHCS = TransformObjectToHClip(IN.positionOS.xyz);
-                OUT.uv = (IN.uv - 0.5) * float2(aspectRatio * cameraSize * 2, cameraSize * 2);
+                OUT.uv = TRANSFORM_TEX(IN.uv, _BaseMap);
                 return OUT;
             }
 
             half4 frag(Varyings IN) : SV_Target
             {
-                bool inParticale = false;
-                uint particleAmount;
-                uint dummystride;
-                particlesBuffer.GetDimensions(particleAmount, dummystride);
-                for (int i = 0; i < int(particleAmount); i++)
-                {
-                    float2 pos = particlesBuffer[i].pos;
-                    if (distance(pos, IN.uv) < _radius)
-                    {
-                        inParticale = true;
-                        break;
-                    }
-                }
-                return inParticale == true ? _particleColor : _defultColor;
+                float value = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
+
+                if (value > 0.01) return lerp(_color1, _color2, value);
+                else return half4(0,0,0,0);
             }
             ENDHLSL
         }

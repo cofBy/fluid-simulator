@@ -377,8 +377,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::particleFun
   spawner: {fileID: 2059157181}
-  particleAmount: 10000
+  particleAmount: 1000000
   mat: {fileID: 2100000, guid: 6585af12947ab4640917b8bd8194e4fb, type: 2}
+  res: {x: 227, y: 128}
+  thickness: 0.3
   computeShader: {fileID: 7200000, guid: 0c8f61d419af7c34ebc9be3ee82c130f, type: 3}
 --- !u!4 &2059157181
 Transform:

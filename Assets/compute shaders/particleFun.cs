@@ -22,6 +22,10 @@ public class particleFun : MonoBehaviour
 
     [Header("rendering")]
     public Material mat;
+    public Vector2Int res;
+    [Range(0, 1)] public float thickness;
+    RenderTexture densityMap;
+    Camera cam;
 
     [Header("computing")]
     public ComputeShader computeShader;
@@ -30,8 +34,13 @@ public class particleFun : MonoBehaviour
     int kernalID;
     int groupSizeX;
 
+    int clearKernalID;
+    int clearGroupSizeX;
+    int clearGroupSizeY;
+
     private void Start()
     {
+        cam = Camera.main;
         particles = new particle[particleAmount];
         for (int i = 0; i < particleAmount; i++)
         {
@@ -46,21 +55,38 @@ public class particleFun : MonoBehaviour
         computeShader.GetKernelThreadGroupSizes(kernalID, out threadx, out _, out _);
         groupSizeX = Mathf.CeilToInt(particleAmount / (float)threadx);
 
+        clearKernalID = computeShader.FindKernel("CSClear");
+        uint clearThreadSize;
+        computeShader.GetKernelThreadGroupSizes(clearKernalID, out clearThreadSize, out _, out _);
+        clearGroupSizeX = Mathf.CeilToInt(res.x / (float)clearThreadSize);
+        clearGroupSizeY = Mathf.CeilToInt(res.y / (float)clearThreadSize);
+
         computeShader.SetBuffer(kernalID, "particlesBuffer", particlesBuffer);
         mat.SetBuffer("particlesBuffer", particlesBuffer);
 
-        computeShader.SetFloats("bounds", new float[2] {Camera.main.orthographicSize * ((float)Screen.width / Screen.height), Camera.main.orthographicSize});
-        mat.SetFloat("cameraSize", Camera.main.orthographicSize);
+        computeShader.SetFloats("bounds", new float[2] {cam.orthographicSize * ((float)Screen.width / Screen.height), cam.orthographicSize});
+        computeShader.SetFloats("res", new float[2] {res.x, res.y});
+        computeShader.SetFloat("thickness", thickness);
+        computeShader.SetInt("particleCount", particleAmount);
         mat.SetFloat("aspectRatio", (float)Screen.width / Screen.height);
+
+        densityMap = new RenderTexture(res.x, res.y, 0, RenderTextureFormat.RFloat);
+        densityMap.enableRandomWrite = true;
+        densityMap.Create();
+        computeShader.SetTexture(kernalID, "densityMap", densityMap);
+        computeShader.SetTexture(clearKernalID, "densityMap", densityMap);
+        mat.SetTexture("_BaseMap", densityMap);
     }
 
     private void Update()
     {
         if (particlesBuffer == null) return;
-        Vector2 worldCursor = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 worldCursor = cam.ScreenToWorldPoint(Input.mousePosition);
         computeShader.SetFloat("dt", Time.deltaTime);
         computeShader.SetFloats("mousePos", new float[2]{ worldCursor.x, worldCursor.y});
         computeShader.SetFloats("spawnerPos", new float[2]{ spawner.position.x, spawner.position.y});
+
+        computeShader.Dispatch(clearKernalID, clearGroupSizeX, clearGroupSizeY, 1);
         computeShader.Dispatch(kernalID, groupSizeX, 1, 1);
     }
 
