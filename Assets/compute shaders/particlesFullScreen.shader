@@ -2,9 +2,10 @@ Shader "Custom/particlesFullScreen"
 {
     Properties
     {
-        [MainTexture] _BaseMap("Base Map", 2D) = "white" {}
-        _color1("color 1", Color) = (1, 1, 1, 1)
-        _color2("color 2", Color) = (0, 0, 1, 1)
+        [MainTexture] _BaseMap("Base Map", 2D) = "black" {}
+        _color("color", Color) = (1, 1, 1, 1)
+        _defultColor("back ground color", Color) = (0,0,0,1)
+        _radius("radius", Float) = 3
     }
 
     SubShader
@@ -37,8 +38,9 @@ Shader "Custom/particlesFullScreen"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseMap_ST;
-                float4 _color1;
-                float4 _color2;
+                float4 _color;
+                float4 _defultColor;
+                int _radius;
             CBUFFER_END
 
             Varyings vert(Attributes IN)
@@ -51,10 +53,9 @@ Shader "Custom/particlesFullScreen"
 
             half4 frag(Varyings IN) : SV_Target
             {
-                float value = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv);
-
-                if (value > 0.01) return lerp(_color1, _color2, value);
-                else return half4(0,0,0,0);
+                float value = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).r;
+                if (value > 0.01) return _color * value;
+                return half4(_defultColor);
             }
             ENDHLSL
         }

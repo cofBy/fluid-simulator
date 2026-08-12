@@ -76,13 +76,38 @@ float2 pressureGradiant(uint index)
     for (uint i = 0; i < particleCount; i++)
     {
         if (i == index) continue;
-        float2 dir = particlesBuffer[i].pos - particlesBuffer[index].pos;
+        float2 dir = particlesBuffer[i].nextPos - particlesBuffer[index].nextPos;
         float dst = length(dir);
         if (dst <= 0.0001) continue;
         float avgPressure = (calculatePressure(particlesBuffer[i].dens) + calculatePressure(particlesBuffer[index].dens)) / 2;
         gradiant += avgPressure * normalize(dir) * smoothingDer(dst, pressureRadius) * mass / particlesBuffer[i].dens;
     }
     return gradiant;
+}
+float2 viscosityGradiant(uint index)
+{
+    float2 gradiant = float2(0, 0);
+
+    for (uint i = 0; i < particleCount; i++)
+    {
+        if (i == index) continue;
+        float2 dir = particlesBuffer[i].nextPos - particlesBuffer[index].nextPos;
+        float dst = length(dir);
+        if (dst >= pressureRadius) continue;
+
+        float2 velocityDiff = particlesBuffer[i].vel - particlesBuffer[index].vel;
+        gradiant += velocityDiff * smoothing(dst, pressureRadius);
+    }
+    return gradiant * viscosityStrength;
+}
+
+float2 calculateDamp(float2 v)
+{
+    float d = damping * dt;
+    float x = v.x > 0 ? min(0, v.x - d) : max(0, v.x + d);
+    float y = v.y > 0 ? min(0, v.y - d) : max(0, v.y + d);
+    
+    return float2(x, y);
 }
 
 [numthreads(256, 1, 1)]
@@ -92,12 +117,13 @@ void CSParticle(uint3 id : SV_DispatchThreadID)
     particle current = particlesBuffer[id.x];
 
     current.dens = calculateDensity(id.x);
-    current.nextPos = current.pos + current.vel / 60;
+    current.nextPos = current.pos + current.vel * dt;
     
-    float2 dampingAcc = damping * -sign(current.vel) * dt;
+    float2 dampingAcc = calculateDamp(current.vel) * dt;
     float2 pressureAcc = pressureGradiant(id.x) / current.dens * dt;
+    float2 viscosityAcc = viscosityGradiant(id.x) / current.dens * dt;
     float2 gravityAcc = float2(0, -gravity) * dt;
-    current.vel += pressureAcc + gravityAcc + dampingAcc;
+    current.vel += pressureAcc + gravityAcc + dampingAcc + viscosityAcc;
     current.pos += current.vel * dt;
     if (abs(current.pos.x) >= bounds.x)
     {

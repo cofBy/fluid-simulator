@@ -54,6 +54,10 @@ public class particleFluid : MonoBehaviour
     int clearGroupSizeX;
     int clearGroupSizeY;
 
+    public float fixedDt = 1f / 120f;
+    public int maxSubsteps = 8;
+    float accumulator;
+
     private void Awake()
     {
         cam = Camera.main;
@@ -74,6 +78,7 @@ public class particleFluid : MonoBehaviour
 
         densityMap = new RenderTexture(res.x, res.y, 0, RenderTextureFormat.RFloat);
         densityMap.enableRandomWrite = true;
+        densityMap.filterMode = FilterMode.Point;
         densityMap.Create();
         mat.SetTexture("_BaseMap", densityMap);
 
@@ -116,11 +121,20 @@ public class particleFluid : MonoBehaviour
     {
         if (particlesBuffer == null) return;
         Vector2 worldCursor = cam.ScreenToWorldPoint(Input.mousePosition);
-        computeShader.SetFloat("dt", Time.deltaTime);
-        computeShader.SetFloats("mousePos", new float[2]{ worldCursor.x, worldCursor.y});
 
-        computeShader.Dispatch(clearKernalID, clearGroupSizeX, clearGroupSizeY, 1);
-        computeShader.Dispatch(kernalID, groupSizeX, 1, 1);
+        float frameDt = Mathf.Min(Time.deltaTime, 0.05f);
+        accumulator += frameDt;
+
+        int steps = 0;
+        while (accumulator >= fixedDt && steps < maxSubsteps)
+        {
+            computeShader.SetFloat("dt", fixedDt);
+            computeShader.SetFloats("mousePos", new float[2]{ worldCursor.x, worldCursor.y});
+            computeShader.Dispatch(clearKernalID, clearGroupSizeX, clearGroupSizeY, 1);
+            computeShader.Dispatch(kernalID, groupSizeX, 1, 1);
+            accumulator -= fixedDt;
+            steps++;
+        }
     }
 
     private void OnDestroy()
