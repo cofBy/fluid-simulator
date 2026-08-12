@@ -376,8 +376,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d203442df86a7348ac75a7c5c1f8003, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::particleFun
-  rowsCols: {x: 0, y: 0}
-  spacing: 0
+  rowsCols: {x: 100, y: 50}
+  spacing: 0.25
+  pressureRadius: 1
+  mass: 0.5
+  targetDensity: 6
+  pressureMultiplier: 10
+  damping: 0.2
+  viscosityStrength: 0.35
+  gravity: 3
+  elasticity: 0.5
+  bounds: {x: 16, y: 9}
   mat: {fileID: 2100000, guid: 6585af12947ab4640917b8bd8194e4fb, type: 2}
   res: {x: 227, y: 128}
   thickness: 0.3

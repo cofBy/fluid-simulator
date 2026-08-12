@@ -12,11 +12,12 @@ public class particleFluid : MonoBehaviour
     {
         public Vector2 pos;
         public Vector2 vel;
-
-        public particle(Vector2 newPos, Vector2 newVel, float newLife)
+        public float density;
+        public particle(Vector2 newPos, Vector2 newVel, float newDensity)
         {
             pos = newPos;
             vel = newVel;
+            density = newDensity;
         }
     }
 
@@ -51,7 +52,7 @@ public class particleFluid : MonoBehaviour
     int clearGroupSizeX;
     int clearGroupSizeY;
 
-    private void Start()
+    private void Awake()
     {
         cam = Camera.main;
         particleAmount = rowsCols.x * rowsCols.y;
@@ -60,7 +61,7 @@ public class particleFluid : MonoBehaviour
         {
             float x = (i % rowsCols.x - rowsCols.x * 0.5f + 0.5f) * spacing;
             float y = (i / rowsCols.x - rowsCols.y * 0.5f + 0.5f) * spacing;
-            particles[i] = new particle(new Vector2(x, y), Vector2.zero, (float)i / particleAmount * 5f);
+            particles[i] = new particle(new Vector2(x, y), Vector2.zero, targetDensity > 0 ? targetDensity : 1f);
         }
 
         particlesBuffer = new ComputeBuffer(particleAmount, 5 * sizeof(float));

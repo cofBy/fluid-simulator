@@ -5,6 +5,7 @@ struct particle
 {
     float2 pos;
     float2 vel;
+    float dens;
 };
 RWStructuredBuffer<particle> particlesBuffer;
 uint particleCount;
@@ -38,13 +39,74 @@ void CSClear(uint3 id : SV_DispatchThreadID)
     densityMap[id.xy] = 0;
 }
 
+float smoothing(float dst, float radius)
+{
+    if (dst >= radius) return 0;
+    float scale = 3.14159265359 * pow(radius, 4) / 6;
+    return (radius - dst) * (radius - dst) / scale;
+}
+float smoothingDer(float dst, float radius)
+{
+    if (dst >= radius) return 0;
+    float scale = 12 / (pow(radius, 4) * 3.14159265359);
+    return (dst - radius) * scale;
+}
+
+float calculateDensity(uint index)
+{
+    float density = 0;
+    for (uint i = 0; i < particleCount; i++)
+    {
+        float dst = distance(particlesBuffer[i].pos, particlesBuffer[index].pos);
+        density += mass * smoothing(dst, pressureRadius);
+    }
+    return density;
+}
+float calculatePressure(float density)
+{
+    float densityError = density - targetDensity;
+    return densityError * pressureMultiplier;
+}
+
+float2 pressureGradiant(uint index)
+{
+    float2 gradiant = float2(0, 0);
+    
+    for (uint i = 0; i < particleCount; i++)
+    {
+        if (i == index) continue;
+        float2 dir = particlesBuffer[i].pos - particlesBuffer[index].pos;
+        float dst = length(dir);
+        if (dst <= 0.0001) continue;
+        float avgPressure = (calculatePressure(particlesBuffer[i].dens) + calculatePressure(particlesBuffer[index].dens)) / 2;
+        gradiant += avgPressure * normalize(dir) * smoothingDer(dst, pressureRadius) * mass / particlesBuffer[i].dens;
+    }
+    return gradiant;
+}
+
 [numthreads(256, 1, 1)]
 void CSParticle(uint3 id : SV_DispatchThreadID)
 {
     if (id.x >= particleCount) return;
     particle current = particlesBuffer[id.x];
+
+    current.dens = calculateDensity(id.x);
     
+    float2 pressureAcc = pressureGradiant(id.x) / current.dens * dt;
+    float2 gravityAcc = float2(0, -gravity) * dt;
+    current.vel += pressureAcc + gravityAcc;
     current.pos += current.vel * dt;
+    if (abs(current.pos.x) >= bounds.x)
+    {
+        current.pos.x = bounds.x * sign(current.pos.x);
+        current.vel.x *= -1 * elasticity;
+    }
+    if (abs(current.pos.y) >= bounds.y)
+    {
+        current.pos.y = bounds.y * sign(current.pos.y);
+        current.vel.y *= -1 * elasticity;
+    }
+    
     
     uint2 pixelPos = clamp((uint2) (((current.pos + screenSize) / (2.0 * screenSize)) * res), uint2(0, 0), uint2(res) - 1);
     densityMap[pixelPos.xy] = clamp(densityMap[pixelPos.xy] + thickness, 0, 1);
