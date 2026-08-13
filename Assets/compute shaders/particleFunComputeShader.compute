@@ -24,11 +24,14 @@ float pressureRadius;
 float mass;
 float targetDensity;
 float pressureMultiplier;
-float damping;
 float viscosityStrength;
 
 float gravity;
 float elasticity;
+
+int mouseInput;
+float interactionForceRadius;
+float interactionForce;
 
 float2 bounds;
 
@@ -100,14 +103,14 @@ float2 viscosityGradiant(uint index)
     }
     return gradiant * viscosityStrength;
 }
-
-float2 calculateDamp(float2 v)
+float2 interaction(uint index)
 {
-    float d = damping * dt;
-    float x = v.x > 0 ? min(0, v.x - d) : max(0, v.x + d);
-    float y = v.y > 0 ? min(0, v.y - d) : max(0, v.y + d);
+    float2 acc;
+    float2 dir = particlesBuffer[index].pos - mousePos;
+    if (length(dir) > interactionForceRadius) return float2(0,0);
+    acc = dir * mouseInput * interactionForce;
     
-    return float2(x, y);
+    return acc;
 }
 
 [numthreads(256, 1, 1)]
@@ -117,13 +120,13 @@ void CSParticle(uint3 id : SV_DispatchThreadID)
     particle current = particlesBuffer[id.x];
 
     current.dens = calculateDensity(id.x);
-    current.nextPos = current.pos + current.vel * dt;
+    current.nextPos = current.pos + current.vel / 60.0;
     
-    float2 dampingAcc = calculateDamp(current.vel) * dt;
+    float2 interactionAcc = interaction(id.x) * dt;
     float2 pressureAcc = pressureGradiant(id.x) / current.dens * dt;
     float2 viscosityAcc = viscosityGradiant(id.x) / current.dens * dt;
     float2 gravityAcc = float2(0, -gravity) * dt;
-    current.vel += pressureAcc + gravityAcc + dampingAcc + viscosityAcc;
+    current.vel += pressureAcc + gravityAcc + viscosityAcc + interactionAcc;
     current.pos += current.vel * dt;
     if (abs(current.pos.x) >= bounds.x)
     {

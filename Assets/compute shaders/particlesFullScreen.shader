@@ -40,7 +40,7 @@ Shader "Custom/particlesFullScreen"
                 float4 _BaseMap_ST;
                 float4 _color;
                 float4 _defultColor;
-                int _radius;
+                float _radius;
             CBUFFER_END
 
             Varyings vert(Attributes IN)
@@ -53,9 +53,33 @@ Shader "Custom/particlesFullScreen"
 
             half4 frag(Varyings IN) : SV_Target
             {
-                float value = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).r;
-                if (value > 0.01) return _color * value;
-                return half4(_defultColor);
+                float width;
+                float height;
+                _BaseMap.GetDimensions(width, height);
+
+                float neighborValue = 0;
+                float self = 0;
+                float radInt = (int)_radius;
+                for(int x = -radInt; x <= radInt; x++)
+                {
+                    for(int y = -radInt; y <= radInt; y++)
+                    {
+                        float2 offset = float2(x, y);
+                        float dist = length(offset);
+
+                        if (dist > _radius) continue;
+
+                        float2 neighbor = clamp(IN.uv + offset / float2(width, height), 0, 1);
+                        float sampleVal = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, neighbor).r;
+
+                        float falloff = 1.0 - saturate(dist / _radius);
+                        neighborValue = max(neighborValue, sampleVal * falloff);
+                    }
+                }
+                self = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, IN.uv).r;
+                float value = min(self + neighborValue, 1);
+
+                return lerp(_defultColor, _color, value);
             }
             ENDHLSL
         }

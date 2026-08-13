@@ -376,23 +376,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d203442df86a7348ac75a7c5c1f8003, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::particleFun
-  rowsCols: {x: 174, y: 90}
-  spacing: 0.25
-  pressureRadius: 1
+  rowsCols: {x: 100, y: 100}
+  spacing: 0.1
+  pressureRadius: 1.25
   mass: 0.5
   targetDensity: 30
   pressureMultiplier: 150
-  damping: 1
   viscosityStrength: 0.35
-  gravity: 7
-  elasticity: 0.1
-  bounds: {x: 15.5, y: 8.5}
+  gravity: 5
+  elasticity: 0.9
+  bounds: {x: 8.5, y: 8.5}
+  interactionForceRadius: 1.5
+  interactionForce: 20
   mat: {fileID: 2100000, guid: 6585af12947ab4640917b8bd8194e4fb, type: 2}
-  res: {x: 113, y: 64}
+  res: {x: 240, y: 135}
   thickness: 0.25
   computeShader: {fileID: 7200000, guid: 0c8f61d419af7c34ebc9be3ee82c130f, type: 3}
-  fixedDt: 0.005
-  maxSubsteps: 1
 --- !u!4 &2059157181
 Transform:
   m_ObjectHideFlags: 0

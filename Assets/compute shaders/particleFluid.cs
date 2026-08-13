@@ -28,13 +28,16 @@ public class particleFluid : MonoBehaviour
     [Range(0, 1)] public float mass;
     public float targetDensity;
     public float pressureMultiplier;
-    [Range(0, 1)] public float damping;
     [Range(0, 1)] public float viscosityStrength;
 
     public float gravity;
     [Range(0, 1)] public float elasticity;
 
     public Vector2 bounds;
+
+    [Header("interacting")]
+    public float interactionForceRadius;
+    public float interactionForce;
 
     [Header("rendering")]
     public Material mat;
@@ -53,10 +56,6 @@ public class particleFluid : MonoBehaviour
     int clearKernalID;
     int clearGroupSizeX;
     int clearGroupSizeY;
-
-    public float fixedDt = 1f / 120f;
-    public int maxSubsteps = 8;
-    float accumulator;
 
     private void Awake()
     {
@@ -107,12 +106,13 @@ public class particleFluid : MonoBehaviour
         computeShader.SetFloat("thickness", thickness);
         computeShader.SetInt("particleCount", particleAmount);
 
+        computeShader.SetFloat("interactionForceRadius", interactionForceRadius);
+        computeShader.SetFloat("interactionForce", interactionForce);
         computeShader.SetFloat("pressureRadius", pressureRadius);
         computeShader.SetFloat("mass", mass);
         computeShader.SetFloat("targetDensity", targetDensity);
         computeShader.SetFloat("pressureMultiplier", pressureMultiplier);
         computeShader.SetFloat("viscosityStrength", viscosityStrength);
-        computeShader.SetFloat("damping", damping);
         computeShader.SetFloat("gravity", gravity);
         computeShader.SetFloat("elasticity", elasticity);
     }
@@ -122,19 +122,24 @@ public class particleFluid : MonoBehaviour
         if (particlesBuffer == null) return;
         Vector2 worldCursor = cam.ScreenToWorldPoint(Input.mousePosition);
 
-        float frameDt = Mathf.Min(Time.deltaTime, 0.05f);
-        accumulator += frameDt;
-
-        int steps = 0;
-        while (accumulator >= fixedDt && steps < maxSubsteps)
+        computeShader.SetFloat("dt", Time.smoothDeltaTime);
+        computeShader.SetInt("mouseInput", input(KeyCode.Mouse0, KeyCode.Mouse1));
+        computeShader.SetFloats("mousePos", new float[2]{ worldCursor.x, worldCursor.y});
+        computeShader.Dispatch(clearKernalID, clearGroupSizeX, clearGroupSizeY, 1);
+        computeShader.Dispatch(kernalID, groupSizeX, 1, 1);
+    }
+    int input(KeyCode posKey, KeyCode negKey)
+    {
+        int x = 0;
+        if (Input.GetKey(posKey))
         {
-            computeShader.SetFloat("dt", fixedDt);
-            computeShader.SetFloats("mousePos", new float[2]{ worldCursor.x, worldCursor.y});
-            computeShader.Dispatch(clearKernalID, clearGroupSizeX, clearGroupSizeY, 1);
-            computeShader.Dispatch(kernalID, groupSizeX, 1, 1);
-            accumulator -= fixedDt;
-            steps++;
+            x += 1;
         }
+        if (Input.GetKey(negKey))
+        {
+            x -= 1;
+        }
+        return x;
     }
 
     private void OnDestroy()
