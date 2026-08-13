@@ -390,7 +390,7 @@ MonoBehaviour:
   interactionForce: 20
   mat: {fileID: 2100000, guid: 6585af12947ab4640917b8bd8194e4fb, type: 2}
   res: {x: 240, y: 135}
-  thickness: 0.25
+  particleRadius: 3
   computeShader: {fileID: 7200000, guid: 0c8f61d419af7c34ebc9be3ee82c130f, type: 3}
 --- !u!4 &2059157181
 Transform:

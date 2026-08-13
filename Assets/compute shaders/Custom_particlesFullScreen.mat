@@ -29,13 +29,13 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _radius: 0
+    - _radius: 3
     m_Colors:
     - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
     - _color: {r: 1, g: 1, b: 1, a: 1}
     - _color1: {r: 0, g: 0.7134721, b: 1, a: 1}
     - _color2: {r: 0, g: 0.6328424, b: 1, a: 1}
-    - _defultColor: {r: 0.13725483, g: 0.14901954, b: 0.16862738, a: 1}
+    - _defultColor: {r: 0.13725477, g: 0.14901948, b: 0.16862732, a: 1}
     - _particleColor: {r: 1, g: 1, b: 1, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

@@ -17,7 +17,7 @@ float2 screenSize;
 
 RWTexture2D<float> densityMap;
 float2 res;
-float thickness;
+float radius;
 
 //fluid sim vars
 float pressureRadius;
@@ -139,8 +139,17 @@ void CSParticle(uint3 id : SV_DispatchThreadID)
         current.vel.y *= -1 * elasticity;
     }
     
-    
     uint2 pixelPos = clamp((uint2) (((current.pos + screenSize) / (2.0 * screenSize)) * res), uint2(0, 0), uint2(res) - 1);
-    densityMap[pixelPos.xy] = clamp(densityMap[pixelPos.xy] + thickness, 0, 1);
+    for (int x = -radius; x <= radius; x++)
+    {
+        for (int y = -radius; y <= radius; y++)
+        {
+            int2 offset = int2(x, y);
+            if (length(offset) > radius) continue;
+            float falloff = 1;
+            densityMap[pixelPos.xy + offset] = falloff;
+        }
+    }
+
     particlesBuffer[id.x] = current;
 }

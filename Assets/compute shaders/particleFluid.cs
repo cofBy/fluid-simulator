@@ -42,7 +42,7 @@ public class particleFluid : MonoBehaviour
     [Header("rendering")]
     public Material mat;
     public Vector2Int res;
-    [Range(0, 1)] public float thickness;
+    public float particleRadius;
     RenderTexture densityMap;
     Camera cam;
 
@@ -103,7 +103,7 @@ public class particleFluid : MonoBehaviour
         computeShader.SetFloats("screenSize", new float[2] { cam.orthographicSize * ((float)Screen.width / Screen.height), cam.orthographicSize });
         computeShader.SetFloats("bounds", new float[2] { bounds.x, bounds.y});
         computeShader.SetFloats("res", new float[2] { res.x, res.y });
-        computeShader.SetFloat("thickness", thickness);
+        computeShader.SetFloat("radius", particleRadius);
         computeShader.SetInt("particleCount", particleAmount);
 
         computeShader.SetFloat("interactionForceRadius", interactionForceRadius);
