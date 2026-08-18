@@ -1,3 +1,4 @@
+<img width="894" height="887" alt="Screenshot 2026-08-14 181946" src="https://github.com/user-attachments/assets/b66a1987-9386-4ded-8d20-b2ea45149737" />
 # performance
 it simulates a 14400 particle with 100fps (in the editor which is much slower)<br/> on my device (AMD Ryzen 5 4500 6-Core Processor, NVIDIA GeForce GTX 1660 Ti) <br/>
 I also recommend you test the performance on your device from [it's itch.io page](https://cof99.itch.io/fluid-simulator)
